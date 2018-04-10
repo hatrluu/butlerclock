@@ -3,9 +3,11 @@ package com.groupproject.bc.butlerclock;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
@@ -14,6 +16,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         Thread t = new Thread(){
             @Override
             public void run() {
@@ -25,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
                             public void run() {
                                 TextView textView = findViewById(R.id.clock);
                                 long date = System.currentTimeMillis();
-                                SimpleDateFormat sdf = new SimpleDateFormat("hh:mm");
+                                SimpleDateFormat sdf = new SimpleDateFormat("hh:mm aa");
                                 String dateString = sdf.format(date);
                                 textView.setText(dateString);
                             }
@@ -36,5 +39,6 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         t.start();
+
     }
 }
