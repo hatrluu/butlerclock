@@ -1,14 +1,11 @@
 package com.groupproject.bc.butlerclock;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -39,6 +36,11 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         t.start();
-
     }
+
+    public void call_addAlarm(View view){
+        Intent intent = new Intent(this,addAlarm.class );
+        startActivity(intent);
+    }
+
 }

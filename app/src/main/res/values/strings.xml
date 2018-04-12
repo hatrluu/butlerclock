@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Butler Clock</string>
+    <string name="clock">Current Time</string>
+    <string name="add_alarm">Add Alarm</string>
+    <string name="save">Save</string>
+    <string name="curr_Alarms">Current Alarms</string>
 </resources>
