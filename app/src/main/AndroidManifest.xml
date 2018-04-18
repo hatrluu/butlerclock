@@ -19,8 +19,6 @@
         <activity android:name=".addAlarm"
             android:parentActivityName=".MainActivity">
         </activity>
-        <receiver android:name="MyBroadcastReceiver" >
-        </receiver>
 
     </application>
 
