@@ -29,13 +29,15 @@ public class MainActivity extends AppCompatActivity {
     AlarmManager am;
     Button button;
     String hour, minute;
-    TextView alarms_textView;
+    long tmp = 0, curr = SystemClock.elapsedRealtime();
+    TextView alarms_textView, oncoming;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         DB = new AlarmData(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        TextView oncoming = findViewById(R.id.textView);
+        oncoming = findViewById(R.id.textView);
+        button = findViewById(R.id.button);
         Cursor c = getData();
         oncoming.setText(showData(c));
         Thread t = new Thread(){
@@ -59,19 +61,23 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         t.start();
-        /*
+        c = getData();
+        if (c.moveToNext()) {
+            tmp = c.getLong(0);
+        }
+
         //Test alarm button
         startAlert();
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                am.set( AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + TWO_SECONDS, pi );
+                am.set( AlarmManager.ELAPSED_REALTIME_WAKEUP, curr + tmp - ((curr%TimeUnit.HOURS.toMillis(24))+TimeUnit.HOURS.toMillis(8)), pi );
                 Toasty();
             }
         });
 
         //Get data from addAlarm.java
-        */
+
     }
 
     private void startAlert() {
@@ -94,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
         for(int i = 0; i<3; i++){
             if(c.moveToNext()){
                 long time = c.getLong(0);
+                //output+= String.valueOf(time);
                 output += sdf.format(time) + "\n";
             }
         }
@@ -110,5 +117,4 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this,addAlarm.class );
         startActivity(intent);
     }
-
 }

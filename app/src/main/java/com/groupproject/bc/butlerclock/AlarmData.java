@@ -6,10 +6,11 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class AlarmData  extends SQLiteOpenHelper{
     private static final String DB_NAME = "alarm.db";
-    private static final int DB_VERSION = 4;
+    private static final int DB_VERSION = 5;
 
-    //database table name and columns
+    //Database table name and columns
     private static final String TABLE_NAME = "alarmtime";
+    //Save time as millisecond
     private static final String TIME = "time";
 
     public AlarmData(Context ctx){
