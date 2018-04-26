@@ -52,15 +52,17 @@ public class MainActivity extends AppCompatActivity {
     protected  void onResume(){
         super.onResume();
         Cursor c = getData();
-        if (c.moveToNext()) {
-            hour = c.getInt(0);
-            minute = c.getInt(1);
+        if (c.getCount() > 0) {
+            if (c.moveToNext()) {
+                hour = c.getInt(0);
+                minute = c.getInt(1);
+            }
+            calendar.setTimeInMillis(System.currentTimeMillis());
+            calendar.set(Calendar.HOUR_OF_DAY, hour);
+            calendar.set(Calendar.MINUTE, minute);
+            calendar.set(Calendar.SECOND, 0);
+            startAlert();
         }
-        calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.set(Calendar.HOUR_OF_DAY, hour);
-        calendar.set(Calendar.MINUTE, minute);
-        calendar.set(Calendar.SECOND,0);
-        startAlert();
     }
 
     private void displayClock(){
@@ -143,6 +145,8 @@ public class MainActivity extends AppCompatActivity {
         if(alarmMgr!=null){
             alarmMgr.cancel(alarmIntent);
         }
+        Cursor c = getData();
+        oncoming.setText(showData(c));
     }
 
     private Cursor getData() {
