@@ -27,16 +27,10 @@ public class MainActivity extends AppCompatActivity {
     private AlarmData DB;
     private AlarmManager alarmMgr;
     private PendingIntent alarmIntent;
-    //final static private long ONE_SECOND = 1000;
-    //final static private long TWO_SECONDS = ONE_SECOND * 2;
-    SimpleDateFormat sdf = new SimpleDateFormat("hh:mm aa");
+    SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss aa");
     Calendar calendar = Calendar.getInstance();
     int hour, minute;
-    PendingIntent pi;
-    BroadcastReceiver br;
-    AlarmManager am;
-    Button clear,test;
-    long tmp = 0, curr = SystemClock.elapsedRealtime();
+    Button clear;
     TextView alarms_textView, oncoming;
 
     @Override
@@ -47,10 +41,29 @@ public class MainActivity extends AppCompatActivity {
         oncoming = findViewById(R.id.textView);
         alarms_textView = findViewById(R.id.alarms_textView);
         clear = findViewById(R.id.clear);
-        test = findViewById(R.id.test);
 
         Cursor c = getData();
         oncoming.setText(showData(c));
+
+        displayClock();
+    }
+
+    @Override
+    protected  void onResume(){
+        super.onResume();
+        Cursor c = getData();
+        if (c.moveToNext()) {
+            hour = c.getInt(0);
+            minute = c.getInt(1);
+        }
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.set(Calendar.HOUR_OF_DAY, hour);
+        calendar.set(Calendar.MINUTE, minute);
+        calendar.set(Calendar.SECOND,0);
+        startAlert();
+    }
+
+    private void displayClock(){
         Thread t = new Thread(){
             @Override
             public void run() {
@@ -72,64 +85,46 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         t.start();
-
-        c = getData();
-        if (c.moveToNext()) {
-            hour = c.getInt(0);
-            minute = c.getInt(1);
-        }
-        //hour = (int)TimeUnit.MILLISECONDS.toHours(tmp);
-        //minute = (int)TimeUnit.MILLISECONDS.toMinutes(tmp);
-        //alarms_textView.setText(String.valueOf(minute));
-        calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.set(Calendar.HOUR_OF_DAY, hour);
-        calendar.set(Calendar.MINUTE, minute);
-        startAlert();
     }
-
     public void startAlert(){
-        //long time = System.currentTimeMillis()+5000;
-
         alarmReceiver aReceiver = new alarmReceiver();
         registerReceiver(aReceiver,new IntentFilter("com.groupproject.bc.butlerclock"));
 
         alarmMgr = (AlarmManager)this.getSystemService(Context.ALARM_SERVICE);
         alarmIntent = PendingIntent.getBroadcast(this, 0, new Intent("com.groupproject.bc.butlerclock"), 0);
 
-        alarmMgr.setInexactRepeating( AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, alarmIntent);
+        //setInexact does not work as well, testing with setExact
+        //alarmMgr.setInexactRepeating( AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, alarmIntent);
+        //To repeat, we need to update the SQL database (e.g. add 1 day in millisecond to have the alarm repeat once a day)
+        alarmMgr.setExact(AlarmManager.RTC_WAKEUP,calendar.getTimeInMillis(),alarmIntent);
         Toast.makeText(this, "Test started", Toast.LENGTH_SHORT).show();
     }
-/*
-    private void startAlert() {
-        br = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                Toast.makeText(context, "Alarm", Toast.LENGTH_LONG).show();
-            }
-        };
-        registerReceiver(br, new IntentFilter("com.groupproject.bc.butlerclock"));
-        pi = PendingIntent.getBroadcast(this,0,new Intent("com.groupproject.bc.butlerclock"),0);
-        am = (AlarmManager) (this.getSystemService(Context.ALARM_SERVICE));
-    }
-    */
 
-    public String showData(Cursor c) {
+    private String showData(Cursor c) {
         String output = "";
-        String aa = " am";
+        String aa = " AM";
+        String minutes;
         //was going to do something with this....
+        //?????
         int count = 3;
         while(count != 0){
             if(c.moveToNext()){
                 hour = c.getInt(0);
                 minute = c.getInt(1);
                 if (hour >= 12) {
-                    aa = " pm";
+                    aa = " PM";
                     if (hour > 12) hour -= 12;
                 } else if (hour == 0) {
                     hour += 12;
                 }
+                if (minute < 10){
+                    minutes = "0"+minute;
+                }
+                else{
+                    minutes = ""+minute;
+                }
                 count--;
-                output += hour + ":" + minute + " " + aa + "\n";
+                output += hour + ":" + minutes + " " + aa + "\n";
             }else{
                 count--;
             }
@@ -145,9 +140,12 @@ public class MainActivity extends AppCompatActivity {
         }catch(SQLException e){
             Toast.makeText(this,"No data",Toast.LENGTH_SHORT).show();
         }
+        if(alarmMgr!=null){
+            alarmMgr.cancel(alarmIntent);
+        }
     }
 
-    public Cursor getData() {
+    private Cursor getData() {
         SQLiteDatabase db = DB.getReadableDatabase();
         Cursor c = db.rawQuery("SELECT * FROM alarmtime",null);
         return c;
