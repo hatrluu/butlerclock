@@ -24,12 +24,12 @@ public class addAlarm extends FragmentActivity{
     public void setTime(View view){
         SQLiteDatabase db = DB.getWritableDatabase();
         Intent intent = new Intent(this, MainActivity.class);
-        long hour = TimeUnit.HOURS.toMillis(timePicker.getHour()); //+5
-        long minute = TimeUnit.MINUTES.toMillis(timePicker.getMinute());
+        int hour = timePicker.getHour();
+        int minute = timePicker.getMinute();
 
-        long time = hour+minute;
         ContentValues values = new ContentValues();
-        values.put("time", time);
+        values.put("hour", hour);
+        values.put("min", minute);
         db.insert("alarmtime", null, values);
         startActivity(intent);
    }

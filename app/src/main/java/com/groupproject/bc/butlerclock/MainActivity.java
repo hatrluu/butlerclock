@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
 
@@ -29,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     //final static private long ONE_SECOND = 1000;
     //final static private long TWO_SECONDS = ONE_SECOND * 2;
     SimpleDateFormat sdf = new SimpleDateFormat("hh:mm aa");
+    Calendar calendar = Calendar.getInstance();
     int hour, minute;
     PendingIntent pi;
     BroadcastReceiver br;
@@ -72,16 +74,20 @@ public class MainActivity extends AppCompatActivity {
         t.start();
 
         c = getData();
-        if (c.moveToFirst()) {
-            tmp = c.getLong(0);
+        if (c.moveToNext()) {
+            hour = c.getInt(0);
+            minute = c.getInt(1);
         }
-        hour = (int)TimeUnit.MILLISECONDS.toHours(tmp);
-        minute = (int)TimeUnit.MILLISECONDS.toMinutes(tmp);
-        alarms_textView.setText(String.valueOf(minute));
-        startAlert(tmp);
+        //hour = (int)TimeUnit.MILLISECONDS.toHours(tmp);
+        //minute = (int)TimeUnit.MILLISECONDS.toMinutes(tmp);
+        //alarms_textView.setText(String.valueOf(minute));
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.set(Calendar.HOUR_OF_DAY, hour);
+        calendar.set(Calendar.MINUTE, minute);
+        startAlert();
     }
 
-    public void startAlert(long time){
+    public void startAlert(){
         //long time = System.currentTimeMillis()+5000;
 
         alarmReceiver aReceiver = new alarmReceiver();
@@ -90,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
         alarmMgr = (AlarmManager)this.getSystemService(Context.ALARM_SERVICE);
         alarmIntent = PendingIntent.getBroadcast(this, 0, new Intent("com.groupproject.bc.butlerclock"), 0);
 
-        alarmMgr.setExact(AlarmManager.RTC_WAKEUP, time ,alarmIntent);
+        alarmMgr.setInexactRepeating( AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, alarmIntent);
         Toast.makeText(this, "Test started", Toast.LENGTH_SHORT).show();
     }
 /*
@@ -109,10 +115,23 @@ public class MainActivity extends AppCompatActivity {
 
     public String showData(Cursor c) {
         String output = "";
-        for(int i = 0; i<3; i++){
+        String aa = " am";
+        //was going to do something with this....
+        int count = 3;
+        while(count != 0){
             if(c.moveToNext()){
-                long time = c.getLong(0);
-                output += sdf.format(time) + "\n";
+                hour = c.getInt(0);
+                minute = c.getInt(1);
+                if (hour >= 12) {
+                    aa = " pm";
+                    if (hour > 12) hour -= 12;
+                } else if (hour == 0) {
+                    hour += 12;
+                }
+                count--;
+                output += hour + ":" + minute + " " + aa + "\n";
+            }else{
+                count--;
             }
         }
         return output;
