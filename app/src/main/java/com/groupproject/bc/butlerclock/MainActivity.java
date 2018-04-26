@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
@@ -17,27 +18,35 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
     private AlarmData DB;
-    final static private long ONE_SECOND = 1000;
-    final static private long TWO_SECONDS = ONE_SECOND * 2;
+    private AlarmManager alarmMgr;
+    private PendingIntent alarmIntent;
+    //final static private long ONE_SECOND = 1000;
+    //final static private long TWO_SECONDS = ONE_SECOND * 2;
     SimpleDateFormat sdf = new SimpleDateFormat("hh:mm aa");
+    int hour, minute;
     PendingIntent pi;
     BroadcastReceiver br;
     AlarmManager am;
-    Button button;
-    String hour, minute;
+    Button clear,test;
     long tmp = 0, curr = SystemClock.elapsedRealtime();
     TextView alarms_textView, oncoming;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         DB = new AlarmData(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         oncoming = findViewById(R.id.textView);
-        button = findViewById(R.id.button);
+        alarms_textView = findViewById(R.id.alarms_textView);
+        clear = findViewById(R.id.clear);
+        test = findViewById(R.id.test);
+
         Cursor c = getData();
         oncoming.setText(showData(c));
         Thread t = new Thread(){
@@ -61,25 +70,30 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         t.start();
+
         c = getData();
-        if (c.moveToNext()) {
+        if (c.moveToFirst()) {
             tmp = c.getLong(0);
         }
-
-        //Test alarm button
-        startAlert();
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                am.set( AlarmManager.ELAPSED_REALTIME_WAKEUP, curr + tmp - ((curr%TimeUnit.HOURS.toMillis(24))+TimeUnit.HOURS.toMillis(8)), pi );
-                Toasty();
-            }
-        });
-
-        //Get data from addAlarm.java
-
+        hour = (int)TimeUnit.MILLISECONDS.toHours(tmp);
+        minute = (int)TimeUnit.MILLISECONDS.toMinutes(tmp);
+        alarms_textView.setText(String.valueOf(minute));
+        startAlert(tmp);
     }
 
+    public void startAlert(long time){
+        //long time = System.currentTimeMillis()+5000;
+
+        alarmReceiver aReceiver = new alarmReceiver();
+        registerReceiver(aReceiver,new IntentFilter("com.groupproject.bc.butlerclock"));
+
+        alarmMgr = (AlarmManager)this.getSystemService(Context.ALARM_SERVICE);
+        alarmIntent = PendingIntent.getBroadcast(this, 0, new Intent("com.groupproject.bc.butlerclock"), 0);
+
+        alarmMgr.setExact(AlarmManager.RTC_WAKEUP, time ,alarmIntent);
+        Toast.makeText(this, "Test started", Toast.LENGTH_SHORT).show();
+    }
+/*
     private void startAlert() {
         br = new BroadcastReceiver() {
             @Override
@@ -91,23 +105,30 @@ public class MainActivity extends AppCompatActivity {
         pi = PendingIntent.getBroadcast(this,0,new Intent("com.groupproject.bc.butlerclock"),0);
         am = (AlarmManager) (this.getSystemService(Context.ALARM_SERVICE));
     }
+    */
 
-    public void Toasty(){
-        Toast.makeText(this, "Alarm with start in " + TWO_SECONDS/1000 + " seconds.", Toast.LENGTH_SHORT).show();
-    }
-    private String showData(Cursor c) {
+    public String showData(Cursor c) {
         String output = "";
         for(int i = 0; i<3; i++){
             if(c.moveToNext()){
                 long time = c.getLong(0);
-                //output+= String.valueOf(time);
                 output += sdf.format(time) + "\n";
             }
         }
         return output;
     }
 
-    private Cursor getData() {
+    public void dropData(View view){
+        SQLiteDatabase db = DB.getReadableDatabase();
+        try{
+            db.execSQL("DELETE FROM alarmtime");
+            Toast.makeText(this,"Data dropped",Toast.LENGTH_SHORT).show();
+        }catch(SQLException e){
+            Toast.makeText(this,"No data",Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public Cursor getData() {
         SQLiteDatabase db = DB.getReadableDatabase();
         Cursor c = db.rawQuery("SELECT * FROM alarmtime",null);
         return c;
